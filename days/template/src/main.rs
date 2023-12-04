@@ -1,15 +1,25 @@
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+
 fn main() {
-    println!("Hello, AoC!");
+    if let Ok(lines) = read_lines("./input") {
+        //
+    }
+}
+
+fn read_lines(filename: &str) -> io::Result<io::Lines<BufReader<File>>>
+{
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
 
-mod dayX {
-    pub fn part1(input: X) -> X) {
+fn part1(input: &str) -> &str {
+    input
+}
 
-    }
-    pub fn part2(input: X) -> X) {
-
-    }
+fn part2(input: &str) -> &str {
+    input
 }
 
 
@@ -33,7 +43,7 @@ mod tests {
         ];
 
         for test_case in test_cases {
-            let result = dayX::part1(test_case.input);
+            let result = part1(test_case.input);
             assert_eq!(result, test_case.expected);
         }
     }
@@ -48,7 +58,7 @@ mod tests {
         ];
 
         for test_case in test_cases {
-            let result = dayX::part2(test_case.input);
+            let result = part2(test_case.input);
             assert_eq!(result, test_case.expected);
         }
     }
