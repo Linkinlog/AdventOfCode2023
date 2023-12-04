@@ -3,9 +3,7 @@ use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
-    // File hosts.txt must exist in the current path
     if let Ok(lines) = read_lines("./input") {
-        // Consumes the iterator, returns an (Optional) String
         println!(
             "{}",
             day1::part2(lines.map(|x| x.unwrap()).collect::<Vec<String>>())
