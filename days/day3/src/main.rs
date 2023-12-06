@@ -21,6 +21,7 @@ fn part1(input: String) -> u32 {
     let mut count = 0;
     let mut grid = Vec::new();
     for line in input.lines() {
+        println!("{}", line);
         let mut row = Vec::new();
         for c in line.chars() {
             row.push(c);
@@ -28,31 +29,13 @@ fn part1(input: String) -> u32 {
         grid.push(row);
     }
 
-    for y in 0..grid.len() {
-        for x in 0..grid[y].len() {
-            if grid[y][x].is_numeric() {
-                let mut num = grid[y][x].to_digit(10).unwrap() as u32;
-                let mut next_x = x + 1;
-                while next_x < grid[y].len() && grid[y][next_x].is_numeric() {
-                    num = num * 10 + grid[y][next_x].to_digit(10).unwrap();
-                    next_x += 1;
-                }
-
-                if next_x != x + 1 {
-                    continue;
-                }
-
-                if check_left(&grid, x, y)
-                    || check_right(&grid, x, y)
-                    || check_up(&grid, x, y)
-                    || check_down(&grid, x, y)
-                    || check_up_left(&grid, x, y)
-                    || check_up_right(&grid, x, y)
-                    || check_down_left(&grid, x, y)
-                    || check_down_right(&grid, x, y)
-                {
-                    count += num;
-                }
+    for (y, row) in grid.iter().enumerate() {
+        for (x, c) in row.iter().enumerate() {
+            if ['*', '#', '$'].contains(c) {
+                count += check_up_for_numbers(&grid, x, y).unwrap_or(0);
+                count += check_down_for_numbers(&grid, x, y).unwrap_or(0);
+                count += check_left_for_numbers(&grid, x, y).unwrap_or(0);
+                count += check_right_for_numbers(&grid, x, y).unwrap_or(0);
             }
         }
     }
@@ -60,130 +43,122 @@ fn part1(input: String) -> u32 {
     count
 }
 
-fn check_left(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
+fn check_left_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
     if x == 0 {
-        return false;
+        return Err(0);
     }
-    let mut i = x - 1;
-    while i > 0 || i == 0 {
-        if grid[y][i] == '#' || grid[y][i] == '*' {
-            return true;
+    let mut sum = 0;
+    let mut i = x;
+    loop {
+        i -= 1;
+        if grid[y][i].is_digit(10) {
+            sum = format!("{}{}", sum, grid[y][i]).parse::<u32>().unwrap();
+        } else {
+            break;
         }
         if i == 0 {
             break;
         }
-        i -= 1;
     }
-    false
+    if sum == 0 {
+        return Err(0);
+    }
+    Ok(sum)
 }
 
-fn check_right(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
+fn check_right_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
     if x == grid[y].len() - 1 {
-        return false;
+        return Err(0);
     }
-    let mut i = x + 1;
-    while i < grid[y].len() {
-        if grid[y][i] == '#' || grid[y][i] == '*' {
-            return true;
-        }
+    let mut sum = 0;
+    let mut i = x;
+    loop {
         i += 1;
-    }
-    false
-}
-
-fn check_up(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
-    if y == 0 {
-        return false;
-    }
-    let mut i = y - 1;
-    while i > 0 {
-        if grid[i][x] == '#' || grid[i][x] == '*' {
-            return true;
-        }
-        i -= 1;
-    }
-    false
-}
-
-fn check_down(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
-    if y == grid.len() - 1 {
-        return false;
-    }
-    let mut i = y + 1;
-    while i < grid.len() {
-        if grid[i][x] == '#' || grid[i][x] == '*' {
-            return true;
-        }
-        i += 1;
-    }
-    false
-}
-
-fn check_up_left(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
-    if x == 0 || y == 0 {
-        return false;
-    }
-    let mut i = x - 1;
-    let mut j = y - 1;
-    while i > 0 && j > 0 {
-        if grid[j][i] == '#' || grid[j][i] == '*' {
-            return true;
-        }
-        i -= 1;
-        j -= 1;
-    }
-    false
-}
-
-fn check_up_right(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
-    if x == grid[y].len() - 1 || y == 0 {
-        return false;
-    }
-    let mut i = x + 1;
-    let mut j = y - 1;
-    while i < grid[y].len() && j > 0 {
-        if grid[j][i] == '#' || grid[j][i] == '*' {
-            return true;
-        }
-        i += 1;
-        j -= 1;
-    }
-    false
-}
-
-fn check_down_left(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
-    if x == 0 || y == grid.len() - 1 {
-        return false;
-    }
-    let mut i = x - 1;
-    let mut j = y + 1;
-    while (i > 0 || i == 0) && j < grid.len() {
-        if grid[j][i] == '#' || grid[j][i] == '*' {
-            return true;
-        }
-        if i == 0 {
+        if grid[y][i].is_digit(10) {
+            sum = format!("{}{}", sum, grid[y][i]).parse::<u32>().unwrap();
+        } else {
             break;
         }
-        i -= 1;
-        j += 1;
+        if i == grid[y].len() - 1 {
+            break;
+        }
     }
-    false
+    if sum == 0 {
+        return Err(0);
+    }
+    Ok(sum)
 }
 
-fn check_down_right(grid: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
-    if x == grid[y].len() - 1 || y == grid.len() - 1 {
-        return false;
+fn check_up_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
+    if y == 0 {
+        return Err(0);
     }
-    let mut i = x + 1;
-    let mut j = y + 1;
-    while i < grid[y].len() && j < grid.len() {
-        if grid[j][i] == '#' || grid[j][i] == '*' {
-            return true;
+
+    let mut total_sum = 0;
+
+    if x > 0 && grid[y - 1][x - 1].is_digit(10) {
+        total_sum += check_left_for_numbers(grid, x - 1, y - 1).unwrap_or(0);
+    }
+
+    if grid[y - 1][x].is_digit(10) {
+        let left_sum = check_left_for_numbers(grid, x, y - 1).unwrap_or(0);
+        let right_sum = check_right_for_numbers(grid, x, y - 1).unwrap_or(0);
+        if right_sum > 0 && left_sum > 0 {
+        total_sum = (grid[y - 1][x].to_digit(10).unwrap() * 10 + left_sum) * 10 + right_sum
+        } else if right_sum > 0 {
+            total_sum = (grid[y - 1][x].to_digit(10).unwrap() * 10) + right_sum
+        } else if left_sum > 0 {
+            total_sum = (grid[y - 1][x].to_digit(10).unwrap() * 10) + left_sum
+        } else {
+            total_sum = grid[y - 1][x].to_digit(10).unwrap()
         }
-        i += 1;
-        j += 1;
     }
-    false
+
+    if x < grid[y].len() - 1 && grid[y - 1][x + 1].is_digit(10) {
+        total_sum += check_right_for_numbers(grid, x, y - 1).unwrap_or(0);
+    }
+
+    if total_sum == 0 {
+        return Err(0);
+    }
+
+    Ok(total_sum)
+}
+
+fn check_down_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
+    if y == grid.len() - 1 {
+        return Err(0);
+    }
+
+    let mut total_sum = 0;
+
+    if x > 0 && grid[y + 1][x - 1].is_digit(10) {
+        total_sum += check_left_for_numbers(grid, x - 1, y + 1).unwrap_or(0);
+    }
+
+    if grid[y + 1][x].is_digit(10) {
+        let left_sum = check_left_for_numbers(grid, x, y + 1).unwrap_or(0);
+        let right_sum = check_right_for_numbers(grid, x, y + 1).unwrap_or(0);
+        if right_sum > 0 && left_sum > 0 {
+        total_sum = (grid[y + 1][x].to_digit(10).unwrap() * 10 + left_sum) * 10 + right_sum
+        } else if right_sum > 0 {
+            total_sum = (grid[y + 1][x].to_digit(10).unwrap() * 10) + right_sum
+        } else if left_sum > 0 {
+            total_sum = (grid[y + 1][x].to_digit(10).unwrap() * 10) + left_sum
+        } else {
+            total_sum = grid[y + 1][x].to_digit(10).unwrap()
+        }
+    }
+
+    if x < grid[y].len() - 1 && grid[y + 1][x + 1].is_digit(10) {
+        total_sum += check_right_for_numbers(grid, x, y + 1).unwrap_or(0);
+    }
+
+    if total_sum == 0 {
+        return Err(0);
+    }
+
+    Ok(total_sum)
 }
 
 fn part2(input: &str) -> &str {
@@ -203,27 +178,42 @@ mod tests {
     fn test_day1() {
         let test_cases = vec![
             TestCase {
-                input: "*111",
+                input: "111*",
                 expected: 111,
             },
             TestCase {
-                input: "2*",
-                expected: 2,
+                input: "*222",
+                expected: 222,
             },
             TestCase {
-                input: ".3........
+                input: ".33.......
 *.........",
-                expected: 3,
+                expected: 33,
             },
             TestCase {
-                input: ".4........
+                input: "44........
 ...*......",
                 expected: 0,
             },
             TestCase {
-                input: ".5........
+                input: ".55.......
 ..#.......",
-                expected: 5,
+                expected: 55,
+            },
+            TestCase {
+                input: ".*........
+.66.......",
+                expected: 66,
+            },
+            TestCase {
+                input: ".*........
+...7......",
+                expected: 0,
+            },
+            TestCase {
+                input: ".*........
+..88......",
+                expected: 8,
             },
             TestCase {
                 input: "467..114..
