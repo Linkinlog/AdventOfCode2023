@@ -13,53 +13,56 @@ fn main() {
 }
 
 fn part1(cards: Vec<String>) -> usize {
-    let mut result = 0;
-
-    for card in cards {
-        let mut games: Vec<Game> = Vec::new();
-        for line in card.lines() {
-            games.push(parse_game(line.to_owned()));
-        }
-
-        for game in games {
-            result += compare_sets_and_add_points((game.winning_numbers, game.our_numbers));
-        }
-    }
-
-    result
+    cards
+        .iter()
+        .flat_map(|card| card.lines())
+        .map(parse_game)
+        .fold(0, |acc, game| {
+            acc + compare_sets_and_add_points((game.winning_numbers, game.our_numbers))
+        })
 }
 
 fn part2(cards: Vec<String>) -> usize {
-    // TODO
-}
+    let original_games: Vec<Game> = cards
+        .iter()
+        .flat_map(|card| card.lines().map(parse_game))
+        .collect();
 
-fn compare_sets_and_add_points(input: (Vec<u32>, Vec<u32>)) -> usize {
-    let (set_a, set_b) = input;
-    let mut result = 0;
+    let mut all_games: Vec<Game> = Vec::new();
+    let mut to_process: Vec<Game> = original_games.clone();
 
-    for i in 0..set_b.len() {
-        if set_a.contains(&set_b[i]) {
-            result = match result {
-                0 => 1,
-                _ => result * 2,
+    while let Some(game) = to_process.pop() {
+        all_games.push(game.clone());
+
+        let matches = compare_sets((game.winning_numbers.clone(), game.our_numbers.clone()));
+        let start_index = original_games.iter().position(|g| *g == game).unwrap_or(0);
+
+        for next_game_index in start_index + 1..start_index + 1 + matches {
+            if next_game_index < original_games.len() {
+                to_process.push(original_games[next_game_index].clone());
             }
         }
     }
 
-    result
+    all_games.len()
+}
+
+fn compare_sets_and_add_points(input: (Vec<u32>, Vec<u32>)) -> usize {
+    let (set_a, set_b) = input;
+    set_b
+        .iter()
+        .filter(|x| set_a.contains(x))
+        .fold(0, |acc, _| if acc == 0 { 1 } else { acc * 2 })
+
 }
 
 fn compare_sets(input: (Vec<u32>, Vec<u32>)) -> usize {
     let (set_a, set_b) = input;
-    let mut result = 0;
 
-    for i in 0..set_b.len() {
-        if set_a.contains(&set_b[i]) {
-            result = result + 1;
-        }
-    }
+    set_b.iter()
+        .filter(|x| set_a.contains(x))
+        .fold(0, |acc, _| acc + 1)
 
-    result
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -69,7 +72,7 @@ struct Game {
     our_numbers: Vec<u32>,
 }
 
-fn parse_game(input: String) -> Game {
+fn parse_game(input: &str) -> Game {
     let mut winning_numbers: Vec<u32> = Vec::new();
     let mut our_numbers: Vec<u32> = Vec::new();
 
@@ -172,7 +175,7 @@ mod tests {
             },
         ];
         for test_case in test_cases {
-            let result = parse_game(test_case.input.to_owned());
+            let result = parse_game(test_case.input);
             assert_eq!(result, test_case.expected);
         }
     }
