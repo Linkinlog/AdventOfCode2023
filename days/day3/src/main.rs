@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs::File;
 use std::io;
 
@@ -13,152 +14,73 @@ fn read_lines(filename: &str) -> io::Result<io::BufReader<File>> {
 }
 
 fn part1(input: String) -> u32 {
-    // turn string into 2d array
-    // iterate over each line, find digits
-    // check left, right, up, down, and diagonals for symbols
-    // if symbol is found, increment count
-    // return count
-    let mut count = 0;
-    let mut grid = Vec::new();
-    for line in input.lines() {
-        println!("{}", line);
-        let mut row = Vec::new();
-        for c in line.chars() {
-            row.push(c);
-        }
-        grid.push(row);
-    }
+    let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    let mut sum = 0;
+    let mut symbols = HashSet::new();
 
+    // Identify symbols
     for (y, row) in grid.iter().enumerate() {
-        for (x, c) in row.iter().enumerate() {
-            if ['*', '#', '$'].contains(c) {
-                count += check_up_for_numbers(&grid, x, y).unwrap_or(0);
-                count += check_down_for_numbers(&grid, x, y).unwrap_or(0);
-                count += check_left_for_numbers(&grid, x, y).unwrap_or(0);
-                count += check_right_for_numbers(&grid, x, y).unwrap_or(0);
+        for (x, &c) in row.iter().enumerate() {
+            if is_symbol(c) {
+                symbols.insert((x, y));
             }
         }
     }
 
-    count
+    // Check adjacent cells of symbols for numbers
+    for &(x, y) in &symbols {
+        sum += check_adjacent_cells_for_numbers(&grid, x, y);
+    }
+
+    sum
 }
 
-fn check_left_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
-    if x == 0 {
-        return Err(0);
-    }
-    let mut sum = 0;
-    let mut i = x;
-    loop {
-        i -= 1;
-        if grid[y][i].is_digit(10) {
-            sum = format!("{}{}", sum, grid[y][i]).parse::<u32>().unwrap();
-        } else {
-            break;
-        }
-        if i == 0 {
-            break;
-        }
-    }
-    if sum == 0 {
-        return Err(0);
-    }
-    Ok(sum)
+fn is_symbol(c: char) -> bool {
+    ['*', '#', '$', '+'].contains(&c)
 }
 
-fn check_right_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
-    if x == grid[y].len() - 1 {
-        return Err(0);
-    }
-    let mut sum = 0;
-    let mut i = x;
-    loop {
-        i += 1;
-        if grid[y][i].is_digit(10) {
-            sum = format!("{}{}", sum, grid[y][i]).parse::<u32>().unwrap();
-        } else {
-            break;
+fn check_adjacent_cells_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> u32 {
+    let mut adjacent_sum = 0;
+    let directions = [
+        (-1, 0),
+        (1, 0),
+        (0, -1),
+        (0, 1),
+        (-1, -1),
+        (-1, 1),
+        (1, -1),
+        (1, 1),
+    ];
+
+    for (dx, dy) in directions {
+        let adj_x = x as isize + dx;
+        let adj_y = y as isize + dy;
+
+        if adj_x >= 0
+            && adj_y >= 0
+            && adj_y < grid.len() as isize
+            && adj_x < grid[adj_y as usize].len() as isize
+        {
+            let adj_cell = grid[adj_y as usize][adj_x as usize];
+            if adj_cell.is_digit(10) {
+                adjacent_sum += extract_number_from_start(grid, adj_x as usize, adj_y as usize);
+            }
         }
-        if i == grid[y].len() - 1 {
-            break;
-        }
     }
-    if sum == 0 {
-        return Err(0);
-    }
-    Ok(sum)
+
+    adjacent_sum
 }
 
-fn check_up_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
-    if y == 0 {
-        return Err(0);
+fn extract_number_from_start(grid: &Vec<Vec<char>>, x: usize, y: usize) -> u32 {
+    let mut num = 0;
+    let mut x_pos = x;
+
+    while x_pos < grid[y].len() && grid[y][x_pos].is_digit(10) {
+        num = num * 10 + grid[y][x_pos].to_digit(10).unwrap();
+        x_pos += 1;
     }
 
-    let mut total_sum = 0;
-
-    if x > 0 && grid[y - 1][x - 1].is_digit(10) {
-        total_sum += check_left_for_numbers(grid, x - 1, y - 1).unwrap_or(0);
-    }
-
-    if grid[y - 1][x].is_digit(10) {
-        let left_sum = check_left_for_numbers(grid, x, y - 1).unwrap_or(0);
-        let right_sum = check_right_for_numbers(grid, x, y - 1).unwrap_or(0);
-        if right_sum > 0 && left_sum > 0 {
-        total_sum = (grid[y - 1][x].to_digit(10).unwrap() * 10 + left_sum) * 10 + right_sum
-        } else if right_sum > 0 {
-            total_sum = (grid[y - 1][x].to_digit(10).unwrap() * 10) + right_sum
-        } else if left_sum > 0 {
-            total_sum = (grid[y - 1][x].to_digit(10).unwrap() * 10) + left_sum
-        } else {
-            total_sum = grid[y - 1][x].to_digit(10).unwrap()
-        }
-    }
-
-    if x < grid[y].len() - 1 && grid[y - 1][x + 1].is_digit(10) {
-        total_sum += check_right_for_numbers(grid, x, y - 1).unwrap_or(0);
-    }
-
-    if total_sum == 0 {
-        return Err(0);
-    }
-
-    Ok(total_sum)
-}
-
-fn check_down_for_numbers(grid: &Vec<Vec<char>>, x: usize, y: usize) -> Result<u32, u32> {
-    if y == grid.len() - 1 {
-        return Err(0);
-    }
-
-    let mut total_sum = 0;
-
-    if x > 0 && grid[y + 1][x - 1].is_digit(10) {
-        total_sum += check_left_for_numbers(grid, x - 1, y + 1).unwrap_or(0);
-    }
-
-    if grid[y + 1][x].is_digit(10) {
-        let left_sum = check_left_for_numbers(grid, x, y + 1).unwrap_or(0);
-        let right_sum = check_right_for_numbers(grid, x, y + 1).unwrap_or(0);
-        if right_sum > 0 && left_sum > 0 {
-        total_sum = (grid[y + 1][x].to_digit(10).unwrap() * 10 + left_sum) * 10 + right_sum
-        } else if right_sum > 0 {
-            total_sum = (grid[y + 1][x].to_digit(10).unwrap() * 10) + right_sum
-        } else if left_sum > 0 {
-            total_sum = (grid[y + 1][x].to_digit(10).unwrap() * 10) + left_sum
-        } else {
-            total_sum = grid[y + 1][x].to_digit(10).unwrap()
-        }
-    }
-
-    if x < grid[y].len() - 1 && grid[y + 1][x + 1].is_digit(10) {
-        total_sum += check_right_for_numbers(grid, x, y + 1).unwrap_or(0);
-    }
-
-    if total_sum == 0 {
-        return Err(0);
-    }
-
-    Ok(total_sum)
+    num
 }
 
 fn part2(input: &str) -> &str {
