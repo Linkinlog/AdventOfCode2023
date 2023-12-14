@@ -34,7 +34,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_day1() {
+    fn test_part1() {
         let test_cases = vec![
             TestCase {
                 input: "",
@@ -49,7 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn test_day2() {
+    fn test_part2() {
         let test_cases = vec![
             TestCase {
                 input: "",
