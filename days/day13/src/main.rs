@@ -12,8 +12,23 @@ fn read_lines(filename: &str) -> io::Result<io::Lines<BufReader<File>>> {
 
 fn part1(input: Vec<&str>) -> usize {
     // iterate over each line verically and horizontally,
-    // if the surrouncing lines are identical, check left/right for smaller number as x
-    // lop off lines so that 
+    // if the surrouncing lines are identical, check left/right for smaller number
+    // lop off lines so that theyre even, prioritizing the smaller number
+}
+
+fn iter_vertical(input: Vec<String>) -> usize {
+    // iterate over each line vertically
+    // if the surrounding lines are identical, check left/right for smaller number
+    // lop off lines so that theyre even, prioritizing the smaller number
+    // return the number of original rows(pre-lopping) to the left of the split
+
+    let mut sum = 0;
+    // iterate vertically
+    for i in 0..input.len() {
+        if input.len() >= i + 1 {
+            let mut right = input[i + 1]
+        }
+    };
 }
 
 fn part2(input: &str) -> &str {
